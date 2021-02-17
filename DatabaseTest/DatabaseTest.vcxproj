@@ -134,10 +134,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="sql_handler.cpp" />
     <ClCompile Include="string_format.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="sql_handler.h" />
     <ClInclude Include="string_format.h" />
+    <ClInclude Include="unit_tests.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
