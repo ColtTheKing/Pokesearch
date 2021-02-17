@@ -11,12 +11,28 @@ struct Command {
 	std::string format;
 };
 
-Command COMMANDS[] = {
+Command MATCH_COMMANDS[] = {
 	{"dex",	    "dex_num = '*'"},
 	{"type",    "(type_1 = '*' OR type_2 = '*')"},
-	{"ability", "(ability_1 = '*' OR ability_2 = '*' OR ability_h = '*')"}
+	{"ability", "(ability_1 = '*' OR ability_2 = '*' OR ability_h = '*')"},
 };
-size_t NUM_COMMANDS = 3;
+size_t NUM_MATCH_COMMANDS = 3;
+
+Command STAT_COMMANDS[] = {
+	{"max_hp", "hp_max ^ '*'"},
+	{ "max_attack", "atk_max ^ '*'" },
+	{ "max_defense", "def_max ^ '*'" },
+	{ "max_sattack", "satk_max ^ '*'" },
+	{ "max_sdefense", "sdef_max ^ '*'" },
+	{ "max_speed", "speed_max ^ *" },
+	{ "base_hp", "hp_base ^ '*'" },
+	{ "base_attack", "atk_base ^ '*'" },
+	{ "base_defense", "def_base ^ '*'" },
+	{ "base_sattack", "satk_base ^ '*'" },
+	{ "base_sdefense", "sdef_base ^ '*'" },
+	{ "base_speed", "speed_base ^ '*'" },
+};
+size_t NUM_STAT_COMMANDS = 12;
 
 Session StartSession(std::string password) {
 	try {
@@ -108,11 +124,11 @@ void AddWhereName(std::string& curWherePart, const std::string& name) {
 		curWherePart += " AND name LIKE '%" + name + "%'";
 }
 
-void AddWhereCommand(std::string& curWherePart, const std::string& cmd, const std::string& param) {
-	for (size_t i = 0; i < NUM_COMMANDS; i++) {
-		bool commandMatches = cmd.compare(COMMANDS[i].key) == 0;
+void AddWhereMatchCommand(std::string& curWherePart, const std::string& cmd, const std::string& param) {
+	for (size_t i = 0; i < NUM_MATCH_COMMANDS; i++) {
+		bool commandMatches = cmd.compare(MATCH_COMMANDS[i].key) == 0;
 		if (commandMatches) {
-			std::string statement = COMMANDS[i].format;
+			std::string statement = MATCH_COMMANDS[i].format;
 
 			size_t paramInd = statement.find('*');
 
@@ -126,6 +142,41 @@ void AddWhereCommand(std::string& curWherePart, const std::string& cmd, const st
 				curWherePart += " WHERE " + statement;
 			else
 				curWherePart += " AND " + statement;
+			return;
+		}
+	}
+
+	std::cout << "No matching command" << std::endl;
+	curWherePart += " WHERE name LIKE '%:%'";
+}
+
+void AddWhereStatCommand(std::string& curWherePart, const std::string& cmd, const std::string& op, const std::string& param) {
+	for (size_t i = 0; i < NUM_STAT_COMMANDS; i++) {
+		bool commandMatches = cmd.compare(STAT_COMMANDS[i].key) == 0;
+		if (commandMatches) {
+			std::string statement = STAT_COMMANDS[i].format;
+
+			// Replace * symbols with the parameter to search with
+			size_t paramInd = statement.find('*');
+			while (paramInd != std::string::npos) {
+				statement.replace(paramInd, 1, param);
+
+				paramInd = statement.find('*');
+			}
+
+			// Replace ^ with the operator to search with
+			paramInd = statement.find('^');
+			while (paramInd != std::string::npos) {
+				statement.replace(paramInd, 1, op);
+
+				paramInd = statement.find('^');
+			}
+
+			if (curWherePart.length() == 0)
+				curWherePart += " WHERE " + statement;
+			else
+				curWherePart += " AND " + statement;
+			
 			return;
 		}
 	}
@@ -148,9 +199,10 @@ std::string ConstructSql(const std::string& criteria) {
 	for (size_t i = 0; i < tokens.size(); i++) {
 		//std::cout << tokens[i] << std::endl;
 
-		// Check if this is a command or if it's just text to search by name
-		if (tokens[i].find(':') != std::string::npos) {
-			// Split the search criteria into commandand parameter components
+		// Check if this is a match command using ':'
+		size_t cmdIdPos = tokens[i].find(':');
+		if (cmdIdPos != std::string::npos) {
+			// Split the search criteria into command and parameter components
 			std::vector<std::string> bits = StringFormat::Tokenize(tokens[i], ':');
 
 			if (bits.size() == 2) {
@@ -173,17 +225,68 @@ std::string ConstructSql(const std::string& criteria) {
 						bits[1].erase(bits[1].length() - 1, 1);
 				}
 
-				AddWhereCommand(wherePart, bits[0], bits[1]);
+				AddWhereMatchCommand(wherePart, bits[0], bits[1]);
 			}
 			else {
 				std::cout << "Parameter " << i << " is invalid" << std::endl;
 				AddWhereName(wherePart, tokens[i]);
 			}
+
+			continue;
 		}
-		else {
-			AddWhereName(wherePart, tokens[i]);
+		
+		// Check if this is a stat command using one of '=', '>=', '<=', '>', or '<'
+		cmdIdPos = tokens[i].find_first_of("=<>");
+		if (cmdIdPos != std::string::npos) {
+			std::string op;
+
+			// Split the search criteria into command, operator, and parameter components
+			bool opIsTwoChars = (tokens[i][cmdIdPos] == '<' || tokens[i][cmdIdPos] == '>')
+				&& cmdIdPos + 1 < tokens[i].length() && tokens[i][cmdIdPos + 1] == '=';
+			if (opIsTwoChars) {
+				op = tokens[i].substr(cmdIdPos, 2);
+			}
+			else {
+				op = tokens[i][cmdIdPos];
+			}
+
+			std::vector<std::string> bits = StringFormat::Tokenize(tokens[i], op);
+
+			if (bits.size() == 2) {
+				// If there is a quotation mark at the start of the parameter
+				if (bits[1][0] == '"') {
+					bits[1].erase(0, 1);
+
+					// Group together consecutive tokens until the end quote is found
+					while (bits[1][bits[1].length() - 1] != '"') {
+						if (++i < tokens.size()) {
+							bits[1] += " " + tokens[i];
+						}
+						else {
+							std::cout << "End quotation was not found" << std::endl;
+							break;
+						}
+					}
+
+					if (bits[1][bits[1].length() - 1] == '"')
+						bits[1].erase(bits[1].length() - 1, 1);
+				}
+
+				AddWhereStatCommand(wherePart, bits[0], op, bits[1]);
+			}
+			else {
+				std::cout << "Parameter " << i << " is invalid" << std::endl;
+				AddWhereName(wherePart, tokens[i]);
+			}
+
+			continue;
 		}
+		
+		// If neither if statement fired, then it must be a simple name search
+		AddWhereName(wherePart, tokens[i]);
 	}
+
+	//std::cout << selectFromPart << wherePart << std::endl;
 
 	return selectFromPart + wherePart;
 }

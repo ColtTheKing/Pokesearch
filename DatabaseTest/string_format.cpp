@@ -35,27 +35,43 @@ std::string StringFormat::AllCaps(const std::string& str) {
 //Splits the string into tokens based on the delimiter and then returns the tokens
 std::vector<std::string> StringFormat::Tokenize(const std::string& str, char delimiter) {
 	std::vector<std::string> tokens;
-	bool foundToken = false;
-	size_t tokenStart;
+	size_t tokenStart = 0;
 
-	for (size_t i = 0; i < str.length(); i++) {
-		if (str[i] == delimiter) {
-			//if we have reached the first delimiter after the token
-			if (foundToken) {
-				//add a new token to the list
-				tokens.push_back(str.substr(tokenStart, i - tokenStart));
-				foundToken = false;
-			}
-		}
-		else if (!foundToken) {
-			tokenStart = i;
-			foundToken = true;
-		}
+	while (tokenStart < str.length()) {
+		size_t nextDelim = str.find(delimiter, tokenStart);
+
+		if (nextDelim == std::string::npos)
+			break;
+
+		tokens.push_back(str.substr(tokenStart, nextDelim - tokenStart));
+
+		tokenStart = nextDelim + 1;
 	}
 
-	//if the string finished on a token, add it as well
-	if (foundToken)
-		tokens.push_back(str.substr(tokenStart, str.length() - tokenStart));
+	// Add the last token
+	tokens.push_back(str.substr(tokenStart, str.length() - tokenStart));
+
+	return tokens;
+}
+
+//Splits the string into tokens based on the delimiter and then returns the tokens
+std::vector<std::string> StringFormat::Tokenize(const std::string& str, const std::string& delimiter) {
+	std::vector<std::string> tokens;
+	size_t tokenStart = 0;
+
+	while (tokenStart < str.length()) {
+		size_t nextDelim = str.find(delimiter, tokenStart);
+
+		if (nextDelim == std::string::npos)
+			break;
+
+		tokens.push_back(str.substr(tokenStart, nextDelim - tokenStart));
+
+		tokenStart = nextDelim + 1;
+	}
+
+	// Add the last token
+	tokens.push_back(str.substr(tokenStart, str.length() - tokenStart));
 
 	return tokens;
 }
