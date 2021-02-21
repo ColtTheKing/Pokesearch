@@ -27,6 +27,30 @@ static Schema MakeSchema(Session& sess) {
 	}
 }
 
+static bool TryCommand(const std::string& input) {
+	if (input.compare("!showstats") == 0) {
+		SQLHandler::showStats = true;
+		return true;
+	}
+
+	if (input.compare("!hidestats") == 0) {
+		SQLHandler::showStats = false;
+		return true;
+	}
+
+	if (input.compare("!showabilities") == 0) {
+		SQLHandler::showAbilities = true;
+		return true;
+	}
+
+	if (input.compare("!hideabilities") == 0) {
+		SQLHandler::showAbilities = false;
+		return true;
+	}
+
+	return false;
+}
+
 int main() {
 	std::cout << "Please enter the database password: ";
 	std::string password;
@@ -44,8 +68,11 @@ int main() {
 			std::cout << "Enter search criteria: ";
 			getline(std::cin, search);
 
-			if (search.compare("quit") == 0)
+			if (search.compare("!quit") == 0)
 				break;
+			
+			if (TryCommand(search))
+				continue;
 
 			SqlResult result = SQLHandler::PerformSql(sess, search);
 

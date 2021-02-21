@@ -114,8 +114,10 @@ void StringFormat::CombineTokensInQuotes(std::vector<std::string>& tokens) {
 		}
 		else {
 			// If there's still an open quote and that was unclosed, add this token to that one
-			tokens[quoteStart] += " " + tokens[i];
-			tokens.erase(tokens.begin() + i--);
+			if (openQuote && quoteStart != i) {
+				tokens[quoteStart] += " " + tokens[i];
+				tokens.erase(tokens.begin() + i--);
+			}
 		}
 	}
 }

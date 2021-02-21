@@ -1,5 +1,8 @@
 #include "sql_handler.h"
 
+bool SQLHandler::showStats = false;
+bool SQLHandler::showAbilities = true;
+
 const Command SQLHandler::MATCH_COMMANDS[] = {
 		{"dex",	    "dex_num = '*'"},
 		{"type",    "(type_1 = '*' OR type_2 = '*')"},
@@ -25,30 +28,7 @@ void SQLHandler::PrintStat(const Value& stat) {
 	std::cout << std::setw(3) << std::setfill(' ') << stat;
 }
 
-void SQLHandler::PrintRow(const Row& row) {
-	std::cout << "================================" << std::endl;
-
-	//dex number and name
-	std::cout << std::resetiosflags(std::ios::adjustfield);
-	std::cout << std::setiosflags(std::ios::left);
-	std::cout << std::setw(25) << std::setfill(' ') << StringFormat::AllCaps((std::string)row[0]);
-	std::cout << std::resetiosflags(std::ios::adjustfield);
-	std::cout << std::setiosflags(std::ios::right);
-	std::cout << " No." << std::setw(3) << std::setfill('0') << row[1] << std::endl;
-
-	//types
-	std::cout << "Type: " << StringFormat::Capitalize((std::string)row[2]);
-	if (!row[3].isNull())
-		std::cout << " / " << StringFormat::Capitalize((std::string)row[3]);
-
-	//abilities
-	std::cout << std::endl << "Ability: " << StringFormat::Capitalize((std::string)row[4]);
-	if (!row[5].isNull())
-		std::cout << " / " << StringFormat::Capitalize((std::string)row[5]);
-	std::cout << std::endl;
-	if (!row[6].isNull())
-		std::cout << "Hidden Ability: " << StringFormat::Capitalize((std::string)row[6]) << std::endl;
-
+void SQLHandler::PrintStats(const Row& row) {
 	//base stats
 	std::cout << "Base Stats:" << std::endl << "  Hp: ";
 	PrintStat(row[7]);
@@ -78,6 +58,40 @@ void SQLHandler::PrintRow(const Row& row) {
 	std::cout << "   Spd: ";
 	PrintStat(row[18]);
 	std::cout << std::endl;
+}
+
+void SQLHandler::PrintAbilities(const Row& row) {
+	//abilities
+	std::cout << "Ability: " << StringFormat::Capitalize((std::string)row[4]);
+	if (!row[5].isNull())
+		std::cout << " / " << StringFormat::Capitalize((std::string)row[5]);
+	std::cout << std::endl;
+	if (!row[6].isNull())
+		std::cout << "Hidden Ability: " << StringFormat::Capitalize((std::string)row[6]) << std::endl;
+}
+
+void SQLHandler::PrintRow(const Row& row) {
+	std::cout << "================================" << std::endl;
+
+	//dex number and name
+	std::cout << std::resetiosflags(std::ios::adjustfield);
+	std::cout << std::setiosflags(std::ios::left);
+	std::cout << std::setw(25) << std::setfill(' ') << StringFormat::AllCaps((std::string)row[0]);
+	std::cout << std::resetiosflags(std::ios::adjustfield);
+	std::cout << std::setiosflags(std::ios::right);
+	std::cout << " No." << std::setw(3) << std::setfill('0') << row[1] << std::endl;
+
+	//types
+	std::cout << "Type: " << StringFormat::Capitalize((std::string)row[2]);
+	if (!row[3].isNull())
+		std::cout << " / " << StringFormat::Capitalize((std::string)row[3]);
+	std::cout << std::endl;
+
+	if (showAbilities)
+		PrintAbilities(row);
+
+	if (showStats)
+		PrintStats(row);
 
 	std::cout << "================================" << std::endl;
 }

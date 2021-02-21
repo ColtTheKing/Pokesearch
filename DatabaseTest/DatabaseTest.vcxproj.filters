@@ -32,8 +32,5 @@
     <ClInclude Include="sql_handler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="unit_tests.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
 </Project>

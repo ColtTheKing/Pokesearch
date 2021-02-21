@@ -15,6 +15,8 @@ struct Command {
 class SQLHandler {
 private:
 	static void PrintStat(const Value& stat);
+	static void PrintStats(const Row& row);
+	static void PrintAbilities(const Row& row);
 	static void AddWhereName(std::string& curWherePart, const std::string& name);
 	static void AddWhereMatchCommand(std::string& curWherePart, const std::string& cmd, const std::string& param);
 	static void AddWhereStatCommand(std::string& curWherePart, const std::string& cmd, const std::string& op, const std::string& param);
@@ -26,6 +28,9 @@ public:
 	const static size_t NUM_MATCH_COMMANDS = 3;
 	const static Command STAT_COMMANDS[];
 	const static size_t NUM_STAT_COMMANDS = 12;
+
+	static bool showStats, showAbilities;
+
 	static void PrintRow(const Row& row);
 	static SqlResult PerformSql(Session& sess, const std::string& criteria);
 };
