@@ -43,13 +43,16 @@ std::vector<std::string> StringFormat::Tokenize(const std::string& str, char del
 		if (nextDelim == std::string::npos)
 			break;
 
-		tokens.push_back(str.substr(tokenStart, nextDelim - tokenStart));
+		//Add the token as long as the token isn't just another delimiter
+		if (str[tokenStart] != delimiter)
+			tokens.push_back(str.substr(tokenStart, nextDelim - tokenStart));
 
 		tokenStart = nextDelim + 1;
 	}
 
-	// Add the last token
-	tokens.push_back(str.substr(tokenStart, str.length() - tokenStart));
+	// Add the last token as the token isn't just another delimiter
+	if (str[tokenStart] != delimiter && tokenStart < str.length())
+		tokens.push_back(str.substr(tokenStart, str.length() - tokenStart));
 
 	return tokens;
 }
@@ -65,18 +68,21 @@ std::vector<std::string> StringFormat::Tokenize(const std::string& str, const st
 		if (nextDelim == std::string::npos)
 			break;
 
-		tokens.push_back(str.substr(tokenStart, nextDelim - tokenStart));
+		//Add the token as long as the token isn't just another delimiter
+		if (str.find(delimiter, tokenStart) != tokenStart)
+			tokens.push_back(str.substr(tokenStart, nextDelim - tokenStart));
 
-		tokenStart = nextDelim + 1;
+		tokenStart = nextDelim + delimiter.length();
 	}
 
-	// Add the last token
-	tokens.push_back(str.substr(tokenStart, str.length() - tokenStart));
+	// Add the last token as the token isn't just another delimiter
+	if (str.find(delimiter, tokenStart) != tokenStart && tokenStart+delimiter.length() < str.length())
+		tokens.push_back(str.substr(tokenStart, str.length() - tokenStart));
 
 	return tokens;
 }
 
-void StringFormat::CombineTokensInQuotes(std::vector<std::string>& tokens) {
+void StringFormat::CombineTokensInQuotes(std::vector<std::string>& tokens, char delimiter) {
 	bool openQuote = false;
 	size_t quoteStart = SIZE_MAX;
 
@@ -90,7 +96,7 @@ void StringFormat::CombineTokensInQuotes(std::vector<std::string>& tokens) {
 			// Then either close or open the quote
 			if (openQuote) {
 				// If the quote was closed, add this token to the starting one
-				tokens[quoteStart] += " " + tokens[i];
+				tokens[quoteStart] += delimiter + tokens[i];
 				tokens.erase(tokens.begin() + i--);
 
 				openQuote = false;
@@ -98,8 +104,6 @@ void StringFormat::CombineTokensInQuotes(std::vector<std::string>& tokens) {
 			else {
 				openQuote = true;
 			}
-
-			
 
 			// Handle cases where there is more than one mark in a token
 			quoteInd = tokens[i].find('"');
@@ -115,7 +119,7 @@ void StringFormat::CombineTokensInQuotes(std::vector<std::string>& tokens) {
 		else {
 			// If there's still an open quote and that was unclosed, add this token to that one
 			if (openQuote && quoteStart != i) {
-				tokens[quoteStart] += " " + tokens[i];
+				tokens[quoteStart] += delimiter + tokens[i];
 				tokens.erase(tokens.begin() + i--);
 			}
 		}

@@ -30,21 +30,30 @@ static Schema MakeSchema(Session& sess) {
 static bool TryCommand(const std::string& input) {
 	if (input.compare("!showstats") == 0) {
 		SQLHandler::showStats = true;
+		std::cout << "Stats will now be displayed" << std::endl;
 		return true;
 	}
 
 	if (input.compare("!hidestats") == 0) {
 		SQLHandler::showStats = false;
+		std::cout << "Stats will no longer be displayed" << std::endl;
 		return true;
 	}
 
 	if (input.compare("!showabilities") == 0) {
 		SQLHandler::showAbilities = true;
+		std::cout << "Abilities will now be displayed" << std::endl;
 		return true;
 	}
 
 	if (input.compare("!hideabilities") == 0) {
 		SQLHandler::showAbilities = false;
+		std::cout << "Abilities will no longer be displayed" << std::endl;
+		return true;
+	}
+
+	if (input.compare("!help") == 0) {
+		SQLHandler::PrintCommandDescriptions();
 		return true;
 	}
 
@@ -57,15 +66,15 @@ int main() {
 	getline(std::cin, password);
 
 	Session sess = StartSession(password);
-	Schema db = MakeSchema(sess);
+	//Schema db = MakeSchema(sess);
 
 	try {
-		Table myTable = db.getTable("pokemon");
+		//Table myTable = db.getTable("pokemon");
 
 		std::string search;
 
 		while (true) {
-			std::cout << "Enter search criteria: ";
+			std::cout << std::endl << "Enter search criteria: ";
 			getline(std::cin, search);
 
 			if (search.compare("!quit") == 0)
